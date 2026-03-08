@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habit Tracker Pro</title>
+    <title>Habit Tracker Pro - Portátil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -12,6 +12,7 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #0f172a;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .glass {
@@ -21,55 +22,60 @@
         }
 
         .animate-pop {
-            animation: pop 0.3s ease-out;
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         @keyframes pop {
-            0% { transform: scale(0.95); opacity: 0; }
+            0% { transform: scale(0.9); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
 
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
+        /* Estilo para el mapa de calor */
+        .heat-cell {
+            aspect-ratio: 1/1;
+            border-radius: 2px;
+            transition: all 0.3s ease;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
+
+        .animate-spin-slow {
+            animation: spin 3s linear infinite;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 10px;
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="text-slate-200 pb-24">
+<body class="text-slate-200 pb-28">
 
-    <!-- Toast de Logro -->
-    <div id="achievement-toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-[100] hidden animate-pop">
+    <!-- Notificación de Logro -->
+    <div id="achievement-toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden animate-pop w-[90%] max-w-sm">
         <div class="bg-slate-800 border border-indigo-500/50 shadow-2xl shadow-indigo-500/20 rounded-2xl p-4 flex items-center gap-4">
             <div class="bg-indigo-500/20 p-2 rounded-xl text-indigo-400">
                 <i data-lucide="sparkles"></i>
             </div>
             <div>
                 <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">¡Logro Desbloqueado!</p>
-                <h4 id="toast-title" class="font-bold text-white">Nombre del Logro</h4>
+                <h4 id="toast-title" class="font-bold text-white text-sm">Nombre del Logro</h4>
             </div>
         </div>
     </div>
 
-    <!-- Header / Perfil -->
+    <!-- Header Principal -->
     <header class="p-6 bg-slate-900/50 backdrop-blur-md sticky top-0 z-30 border-b border-slate-800">
         <div class="max-w-2xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <div class="relative">
                     <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <i data-lucide="trophy" class="text-white"></i>
+                        <i data-lucide="trophy" class="text-white w-6 h-6"></i>
                     </div>
                     <div id="user-level" class="absolute -bottom-1 -right-1 bg-amber-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-slate-900 text-slate-900">
                         Lvl 1
                     </div>
                 </div>
                 <div>
-                    <h2 class="font-bold text-white leading-tight">Hola, <span id="user-name">Usuario</span></h2>
+                    <h2 class="font-bold text-white leading-tight">Mi Progreso</h2>
                     <div class="flex items-center gap-2 mt-1">
                         <div class="w-24 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                             <div id="xp-bar" class="h-full bg-indigo-500 transition-all duration-1000" style="width: 0%"></div>
@@ -78,239 +84,110 @@
                     </div>
                 </div>
             </div>
-            <button onclick="toggleModal(true)" class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-indigo-600/20">
-                <i data-lucide="plus" class="text-white"></i>
+            <button onclick="toggleModal(true)" class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-indigo-600/20">
+                <i data-lucide="plus" class="text-white w-5 h-5"></i>
             </button>
         </div>
     </header>
 
-    <main id="app-content" class="max-w-2xl mx-auto p-6">
-        <!-- Contenido dinámico inyectado por JS -->
+    <!-- Contenido Principal -->
+    <main id="app-content" class="max-w-2xl mx-auto p-6 min-h-[60vh]">
+        <!-- Cargando... -->
+        <div class="flex flex-col items-center justify-center py-20 text-slate-500">
+            <i data-lucide="refresh-cw" class="animate-spin-slow mb-4 w-8 h-8"></i>
+            <p class="text-xs font-bold uppercase tracking-widest">Iniciando sistema...</p>
+        </div>
     </main>
 
     <!-- Navegación Inferior -->
     <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-2xl border-t border-slate-800/50 px-6 py-4 z-40">
         <div class="max-w-2xl mx-auto flex justify-around items-center">
             <button onclick="switchTab('today')" id="nav-today" class="flex flex-col items-center gap-1 transition-all text-indigo-400 scale-110">
-                <i data-lucide="target"></i>
+                <i data-lucide="target" class="w-6 h-6"></i>
                 <span class="text-[10px] font-bold">Hoy</span>
             </button>
             <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center gap-1 transition-all text-slate-500">
-                <i data-lucide="trending-up"></i>
+                <i data-lucide="trending-up" class="w-6 h-6"></i>
                 <span class="text-[10px] font-bold">Progreso</span>
             </button>
             <button onclick="switchTab('achievements')" id="nav-achievements" class="flex flex-col items-center gap-1 transition-all text-slate-500">
-                <i data-lucide="award"></i>
+                <i data-lucide="award" class="w-6 h-6"></i>
                 <span class="text-[10px] font-bold">Logros</span>
             </button>
         </div>
     </nav>
 
-    <!-- Modal Agregar Hábito -->
+    <!-- Modal Nuevo Hábito -->
     <div id="add-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] p-10 shadow-2xl animate-pop">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-black text-white">Nuevo Objetivo</h2>
-                <button onclick="toggleModal(false)" class="text-slate-500 hover:text-white transition-colors">
-                    <i data-lucide="x"></i>
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl animate-pop">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-white">Nuevo Objetivo</h2>
+                <button onclick="toggleModal(false)" class="p-2 text-slate-500 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
             <div class="space-y-6">
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 ml-1">¿Qué hábito quieres crear?</label>
-                    <input id="habit-name-input" type="text" placeholder="Ej: Meditar 10 min..." class="w-full bg-slate-800 border-slate-700 border-2 rounded-2xl p-4 text-white focus:border-indigo-500 focus:ring-0 outline-none transition-all placeholder:text-slate-600">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 ml-1">Nombre del hábito</label>
+                    <input id="habit-name-input" type="text" placeholder="Ej: Beber 2L de agua..." class="w-full bg-slate-800 border-slate-700 border-2 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none transition-all">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 ml-1">Categoría</label>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 ml-1">Categoría</label>
                     <div id="category-selector" class="flex flex-wrap gap-2">
                         <!-- Categorías dinámicas -->
                     </div>
                 </div>
-                <button onclick="createNewHabit()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-indigo-600/20 transition-all active:scale-95 flex items-center justify-center gap-2">
-                    Empezar Ahora
-                    <i data-lucide="chevron-right"></i>
+                <button onclick="createNewHabit()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 mt-4">
+                    Crear Hábito
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase Scripts -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global State
-        let state = {
-            habits: [],
-            profile: { xp: 0, level: 1, name: 'Usuario', lastResetMonth: new Date().getMonth() },
-            unlockedAchievements: [],
-            activeTab: 'today',
-            selectedCategory: 'Salud',
-            user: null
+    <script>
+        // --- MOTOR DE PERSISTENCIA ---
+        const Storage = {
+            prefix: 'habit_pro_',
+            save: (key, data) => localStorage.setItem(Storage.prefix + key, JSON.stringify(data)),
+            get: (key) => {
+                const item = localStorage.getItem(Storage.prefix + key);
+                return item ? JSON.parse(item) : null;
+            }
         };
 
+        // --- ESTADO GLOBAL ---
+        let state = {
+            habits: Storage.get('habits') || [],
+            profile: Storage.get('profile') || { xp: 0, level: 1, lastResetMonth: new Date().getMonth() },
+            unlockedAchievements: Storage.get('achievements') || [],
+            activeTab: 'today',
+            selectedCategory: 'Salud'
+        };
+
+        const CATEGORIES = ['Salud', 'Trabajo', 'Mente', 'Social', 'Hobby'];
         const ACHIEVEMENTS_LIST = [
             { id: 'first_habit', title: 'Primer Paso', desc: 'Crea tu primer hábito', icon: 'target', color: 'text-blue-400' },
             { id: 'level_5', title: 'Aspirante', desc: 'Alcanza el nivel 5', icon: 'trending-up', color: 'text-purple-400' },
             { id: 'streak_7', title: 'Constancia', desc: 'Logra una racha de 7 días', icon: 'flame', color: 'text-orange-400' },
-            { id: 'master_5', title: 'Multitarea', desc: 'Ten 5 hábitos activos a la vez', icon: 'zap', color: 'text-amber-400' },
-            { id: 'perfectionist', title: 'Perfeccionista', desc: 'Completa todos tus hábitos en un día', icon: 'award', color: 'text-emerald-400' },
-            { id: 'xp_500', title: 'Veterano', desc: 'Acumula 500 XP totales', icon: 'medal', color: 'text-rose-400' },
+            { id: 'master_5', title: 'Multitarea', desc: 'Ten 5 hábitos activos', icon: 'zap', color: 'text-amber-400' },
+            { id: 'perfectionist', title: 'Perfeccionista', desc: 'Día completo (mínimo 2)', icon: 'award', color: 'text-emerald-400' }
         ];
 
-        const CATEGORIES = ['Salud', 'Trabajo', 'Mente', 'Social', 'Hobby'];
-
-        // Initializing Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'habit-pro-v1';
-
-        // Auth initialization
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
+        // --- LÓGICA DE NEGOCIO ---
+        
+        const saveState = () => {
+            Storage.save('habits', state.habits);
+            Storage.save('profile', state.profile);
+            Storage.save('achievements', state.unlockedAchievements);
         };
 
-        onAuthStateChanged(auth, (u) => {
-            state.user = u;
-            if (u) initDataSync();
-        });
-
-        initAuth();
-
-        const initDataSync = () => {
-            const habitsRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'habits');
-            const profileRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'profile', 'stats');
-            const achRef = collection(db, 'artifacts', appId, 'users', state.user.uid, 'achievements');
-
-            onSnapshot(habitsRef, (snapshot) => {
-                state.habits = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                render();
-                checkAchievements();
-            });
-
-            onSnapshot(profileRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    state.profile = docSnap.data();
-                    updateHeader();
-                    checkMonthlyReset(docSnap.data());
-                } else {
-                    setDoc(profileRef, { xp: 0, level: 1, name: 'Explorador', lastResetMonth: new Date().getMonth() });
-                }
-            });
-
-            onSnapshot(achRef, (snapshot) => {
-                state.unlockedAchievements = snapshot.docs.map(doc => doc.id);
-                if (state.activeTab === 'achievements') render();
-            });
-        };
-
-        // Monthly Reset Logic
-        const checkMonthlyReset = async (profileData) => {
-            const currentMonth = new Date().getMonth();
-            if (profileData.lastResetMonth !== undefined && profileData.lastResetMonth !== currentMonth) {
-                const batch = writeBatch(db);
-                state.habits.forEach(h => {
-                    const hRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'habits', h.id);
-                    batch.update(hRef, { completedDates: [], streak: 0 });
-                });
-                const pRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'profile', 'stats');
-                batch.update(pRef, { lastResetMonth: currentMonth });
-                await batch.commit();
-            }
-        };
-
-        // UI Handlers
-        window.switchTab = (tab) => {
-            state.activeTab = tab;
-            ['today', 'stats', 'achievements'].forEach(t => {
-                const el = document.getElementById(`nav-${t}`);
-                if (t === tab) {
-                    el.classList.add('text-indigo-400', 'scale-110');
-                    el.classList.remove('text-slate-500');
-                } else {
-                    el.classList.remove('text-indigo-400', 'scale-110');
-                    el.classList.add('text-slate-500');
-                }
-            });
-            render();
-        };
-
-        window.toggleModal = (show) => {
-            const modal = document.getElementById('add-modal');
-            modal.classList.toggle('hidden', !show);
-            if (show) {
-                renderCategorySelector();
-                document.getElementById('habit-name-input').focus();
-            }
-        };
-
-        const renderCategorySelector = () => {
-            const container = document.getElementById('category-selector');
-            container.innerHTML = CATEGORIES.map(cat => `
-                <button onclick="window.selectCat('${cat}')" 
-                    class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${state.selectedCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
-                    ${cat}
-                </button>
-            `).join('');
-        };
-
-        window.selectCat = (cat) => {
-            state.selectedCategory = cat;
-            renderCategorySelector();
-        };
-
-        window.createNewHabit = async () => {
-            const name = document.getElementById('habit-name-input').value;
-            if (!name.trim()) return;
-
-            await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'habits'), {
-                name,
-                category: state.selectedCategory,
-                streak: 0,
-                completedDates: [],
-                createdAt: new Date().toISOString()
-            });
-
-            document.getElementById('habit-name-input').value = '';
-            toggleModal(false);
-            updateXP(25);
-        };
-
-        window.toggleHabit = async (id) => {
-            const habit = state.habits.find(h => h.id === id);
-            const todayStr = new Date().toISOString().split('T')[0];
-            const isCompletedToday = habit.completedDates?.includes(todayStr);
-            
-            let updatedDates = habit.completedDates || [];
-            if (isCompletedToday) {
-                updatedDates = updatedDates.filter(d => d !== todayStr);
-                updateXP(-15);
-            } else {
-                updatedDates = [...updatedDates, todayStr];
-                updateXP(15);
-            }
-
-            const streak = calculateStreak(updatedDates);
-            const hRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'habits', id);
-            await updateDoc(hRef, { completedDates: updatedDates, streak });
-        };
-
-        window.deleteHabit = async (id) => {
-            await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'habits', id));
-        };
-
-        const updateXP = async (amount) => {
-            const newXP = Math.max(0, state.profile.xp + amount);
-            const newLevel = Math.floor(newXP / 100) + 1;
-            const profileRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'profile', 'stats');
-            await updateDoc(profileRef, { xp: newXP, level: newLevel });
+        const updateXP = (amount) => {
+            state.profile.xp = Math.max(0, state.profile.xp + amount);
+            state.profile.level = Math.floor(state.profile.xp / 100) + 1;
+            updateHeader();
+            saveState();
+            checkAchievements();
         };
 
         const calculateStreak = (dates) => {
@@ -331,8 +208,16 @@
             return streak;
         };
 
-        const checkAchievements = async () => {
-            if (!state.user) return;
+        const checkMonthlyReset = () => {
+            const currentMonth = new Date().getMonth();
+            if (state.profile.lastResetMonth !== currentMonth) {
+                state.habits = state.habits.map(h => ({ ...h, completedDates: [], streak: 0 }));
+                state.profile.lastResetMonth = currentMonth;
+                saveState();
+            }
+        };
+
+        const checkAchievements = () => {
             const todayStr = new Date().toISOString().split('T')[0];
             const newlyUnlocked = [];
 
@@ -340,15 +225,15 @@
             if (state.profile.level >= 5 && !state.unlockedAchievements.includes('level_5')) newlyUnlocked.push('level_5');
             if (state.habits.some(h => h.streak >= 7) && !state.unlockedAchievements.includes('streak_7')) newlyUnlocked.push('streak_7');
             if (state.habits.length >= 5 && !state.unlockedAchievements.includes('master_5')) newlyUnlocked.push('master_5');
-            if (state.profile.xp >= 500 && !state.unlockedAchievements.includes('xp_500')) newlyUnlocked.push('xp_500');
+            
             const allDone = state.habits.length >= 2 && state.habits.every(h => h.completedDates?.includes(todayStr));
             if (allDone && !state.unlockedAchievements.includes('perfectionist')) newlyUnlocked.push('perfectionist');
 
-            for (const achId of newlyUnlocked) {
-                const achDoc = doc(db, 'artifacts', appId, 'users', state.user.uid, 'achievements', achId);
-                await setDoc(achDoc, { unlockedAt: new Date().toISOString() });
-                showToast(ACHIEVEMENTS_LIST.find(a => a.id === achId));
-            }
+            newlyUnlocked.forEach(id => {
+                state.unlockedAchievements.push(id);
+                showToast(ACHIEVEMENTS_LIST.find(a => a.id === id));
+            });
+            if (newlyUnlocked.length > 0) saveState();
         };
 
         const showToast = (ach) => {
@@ -358,168 +243,234 @@
             setTimeout(() => toast.classList.add('hidden'), 5000);
         };
 
+        // --- CONTROLADORES UI ---
+
+        window.switchTab = (tab) => {
+            state.activeTab = tab;
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('text-indigo-400', 'scale-110');
+                btn.classList.add('text-slate-500');
+            });
+            const activeNav = document.getElementById(`nav-${tab}`);
+            activeNav.classList.add('text-indigo-400', 'scale-110');
+            activeNav.classList.remove('text-slate-500');
+            render();
+        };
+
+        window.toggleModal = (show) => {
+            const modal = document.getElementById('add-modal');
+            modal.classList.toggle('hidden', !show);
+            if (show) {
+                renderCategorySelector();
+                document.getElementById('habit-name-input').focus();
+            }
+        };
+
+        window.selectCat = (cat) => {
+            state.selectedCategory = cat;
+            renderCategorySelector();
+        };
+
+        const renderCategorySelector = () => {
+            const container = document.getElementById('category-selector');
+            container.innerHTML = CATEGORIES.map(cat => `
+                <button onclick="window.selectCat('${cat}')" 
+                    class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${state.selectedCategory === cat ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
+                    ${cat}
+                </button>
+            `).join('');
+        };
+
+        window.createNewHabit = () => {
+            const input = document.getElementById('habit-name-input');
+            const name = input.value.trim();
+            if (!name) return;
+
+            state.habits.push({
+                id: Date.now(),
+                name,
+                category: state.selectedCategory,
+                completedDates: [],
+                streak: 0,
+                createdAt: new Date().toISOString()
+            });
+
+            input.value = '';
+            toggleModal(false);
+            updateXP(25);
+            render();
+        };
+
+        window.toggleHabit = (id) => {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const habit = state.habits.find(h => h.id === id);
+            const isDone = habit.completedDates.includes(todayStr);
+
+            if (isDone) {
+                habit.completedDates = habit.completedDates.filter(d => d !== todayStr);
+                updateXP(-15);
+            } else {
+                habit.completedDates.push(todayStr);
+                updateXP(15);
+            }
+
+            habit.streak = calculateStreak(habit.completedDates);
+            saveState();
+            render();
+        };
+
+        window.deleteHabit = (id) => {
+            state.habits = state.habits.filter(h => h.id !== id);
+            saveState();
+            render();
+        };
+
         const updateHeader = () => {
             document.getElementById('user-level').innerText = `Lvl ${state.profile.level}`;
             document.getElementById('xp-bar').style.width = `${state.profile.xp % 100}%`;
             document.getElementById('xp-text').innerText = `${state.profile.xp % 100}/100 XP`;
         };
 
-        // Render Functions
+        // --- RENDERIZADO DE VISTAS ---
+
         const render = () => {
             const container = document.getElementById('app-content');
-            if (state.activeTab === 'today') renderToday(container);
-            else if (state.activeTab === 'stats') renderStats(container);
-            else if (state.activeTab === 'achievements') renderAchievements(container);
-            lucide.createIcons();
-        };
-
-        const renderToday = (container) => {
             const todayStr = new Date().toISOString().split('T')[0];
-            const completedCount = state.habits.filter(h => h.completedDates?.includes(todayStr)).length;
-            
-            container.innerHTML = `
-                <div class="space-y-8 animate-pop">
-                    <div class="bg-slate-800/30 border border-slate-700/50 rounded-2xl px-4 py-2 flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                            Ciclo Mensual: ${new Date().toLocaleString('es', { month: 'long' })}
-                        </div>
-                        <div class="text-[10px] text-indigo-400 font-black">REINICIO AUTO-ACTIVO</div>
-                    </div>
 
-                    <section>
-                        <div class="flex justify-between items-end mb-4">
-                            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                                <i data-lucide="calendar" class="text-indigo-400"></i>
-                                Tu día
-                            </h3>
-                            <span class="text-slate-400 text-sm">${completedCount}/${state.habits.length} completados</span>
+            if (state.activeTab === 'today') {
+                const completed = state.habits.filter(h => h.completedDates.includes(todayStr)).length;
+                container.innerHTML = `
+                    <div class="space-y-6 animate-pop">
+                        <div class="glass rounded-3xl p-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-indigo-500/20 p-2 rounded-xl text-indigo-400">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Ciclo de ${new Date().toLocaleString('es', {month:'long'})}</p>
+                                    <p class="text-xs text-indigo-300">Reinicio activo al finalizar mes</p>
+                                </div>
+                            </div>
+                            <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-bold px-2 py-1 rounded-lg">LIVE</span>
                         </div>
-                        <div class="grid gap-4">
+
+                        <div class="flex justify-between items-end px-1">
+                            <h3 class="text-lg font-bold">Hábitos para hoy</h3>
+                            <span class="text-slate-500 text-xs">${completed}/${state.habits.length} hechos</span>
+                        </div>
+
+                        <div class="grid gap-3">
                             ${state.habits.length === 0 ? `
-                                <div class="bg-slate-800/40 border border-slate-700 border-dashed rounded-3xl p-10 text-center">
-                                    <i data-lucide="target" class="mx-auto text-slate-600 mb-4 w-12 h-12"></i>
-                                    <p class="text-slate-400">¿Qué gran hábito empezaremos hoy?</p>
-                                    <button onclick="toggleModal(true)" class="mt-4 text-indigo-400 font-semibold hover:text-indigo-300">Crear mi primer hábito</button>
+                                <div class="bg-slate-800/20 border-2 border-dashed border-slate-800 rounded-[2rem] p-12 text-center">
+                                    <i data-lucide="sparkles" class="mx-auto text-slate-700 w-12 h-12 mb-4"></i>
+                                    <p class="text-slate-500 text-sm">Comienza tu viaje hoy mismo</p>
+                                    <button onclick="toggleModal(true)" class="mt-4 text-indigo-400 text-xs font-bold uppercase tracking-widest">Crear hábito</button>
                                 </div>
                             ` : state.habits.map(h => {
-                                const done = h.completedDates?.includes(todayStr);
+                                const done = h.completedDates.includes(todayStr);
                                 return `
-                                <div class="group bg-slate-800/50 border transition-all duration-300 rounded-3xl p-4 flex items-center justify-between ${done ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-700 hover:border-slate-600'}">
+                                <div class="group bg-slate-800/40 border border-slate-800/50 rounded-3xl p-4 flex items-center justify-between transition-all ${done ? 'opacity-60 grayscale' : ''}">
                                     <div class="flex items-center gap-4">
-                                        <button onclick="window.toggleHabit('${h.id}')" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${done ? 'bg-emerald-500 text-white rotate-6' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}">
+                                        <button onclick="toggleHabit(${h.id})" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${done ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'}">
                                             <i data-lucide="${done ? 'check-circle-2' : 'circle'}"></i>
                                         </button>
                                         <div>
-                                            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-0.5 block">${h.category}</span>
-                                            <h4 class="font-bold transition-all ${done ? 'text-slate-400 line-through' : 'text-white'}">${h.name}</h4>
-                                            <div class="flex items-center gap-1 text-orange-400 text-xs font-bold mt-1">
+                                            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">${h.category}</span>
+                                            <h4 class="font-bold text-sm leading-none ${done ? 'line-through' : ''}">${h.name}</h4>
+                                            <div class="flex items-center gap-1 mt-1 text-orange-400 text-[10px] font-bold">
                                                 <i data-lucide="flame" class="w-3 h-3"></i> ${h.streak} días
                                             </div>
                                         </div>
                                     </div>
-                                    <button onclick="window.deleteHabit('${h.id}')" class="opacity-0 group-hover:opacity-100 p-2 text-slate-500 hover:text-rose-400 transition-all">
-                                        <i data-lucide="trash-2" class="w-4.5 h-4.5"></i>
+                                    <button onclick="deleteHabit(${h.id})" class="opacity-0 group-hover:opacity-100 p-2 text-slate-700 hover:text-rose-500 transition-all">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                                 `;
                             }).join('')}
                         </div>
-                    </section>
-                </div>
-            `;
-        };
+                    </div>
+                `;
+            } else if (state.activeTab === 'stats') {
+                const last30Days = [...Array(30)].map((_, i) => {
+                    const d = new Date(); d.setDate(d.getDate() - i);
+                    return d.toISOString().split('T')[0];
+                }).reverse();
 
-        const renderStats = (container) => {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const last30Days = [...Array(30)].map((_, i) => {
-                const d = new Date(); d.setDate(d.getDate() - i);
-                return d.toISOString().split('T')[0];
-            }).reverse();
+                const heatmap = last30Days.map(date => {
+                    const count = state.habits.filter(h => h.completedDates.includes(date)).length;
+                    const intensity = state.habits.length > 0 ? count / state.habits.length : 0;
+                    return `<div class="heat-cell w-full ${intensity === 0 ? 'bg-slate-800' : intensity < 0.5 ? 'bg-indigo-900' : intensity < 1 ? 'bg-indigo-600' : 'bg-indigo-400'}"></div>`;
+                }).join('');
 
-            const dailyData = last30Days.map(date => {
-                const count = state.habits.filter(h => h.completedDates?.includes(date)).length;
-                return { percent: state.habits.length ? (count / state.habits.length) * 100 : 0, intensity: state.habits.length ? (count / state.habits.length) : 0 };
-            });
-
-            const avgComp = dailyData.slice(-7).reduce((acc, d) => acc + d.percent, 0) / 7;
-            const totalCompletions = state.habits.reduce((acc, h) => acc + (h.completedDates?.length || 0), 0);
-            const bestStreak = Math.max(...state.habits.map(h => h.streak || 0), 0);
-
-            container.innerHTML = `
-                <div class="space-y-6 animate-pop pb-10">
-                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i data-lucide="trending-up" class="text-indigo-400"></i> Análisis Dinámico
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-slate-800/50 border border-slate-700 rounded-[2.5rem] p-8 flex flex-col items-center text-center justify-center">
-                            <div class="relative w-32 h-32 mb-4">
-                                <svg class="w-full h-full transform -rotate-90">
-                                    <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-700" />
-                                    <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent" 
-                                        stroke-dasharray="364.4" stroke-dashoffset="${364.4 - (364.4 * avgComp) / 100}"
-                                        class="text-indigo-500 transition-all duration-1000 ease-out" stroke-linecap="round" />
-                                </svg>
-                                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span class="text-3xl font-black text-white">${Math.round(avgComp)}%</span>
-                                    <span class="text-[10px] text-slate-500 font-bold uppercase">Score</span>
-                                </div>
+                container.innerHTML = `
+                    <div class="space-y-6 animate-pop">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="glass rounded-[2rem] p-6 text-center">
+                                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total XP</p>
+                                <p class="text-3xl font-black text-white">${state.profile.xp}</p>
                             </div>
-                            <h4 class="font-bold text-slate-300 text-sm">Consistencia Semanal</h4>
+                            <div class="glass rounded-[2rem] p-6 text-center">
+                                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Hábitos</p>
+                                <p class="text-3xl font-black text-white">${state.habits.length}</p>
+                            </div>
                         </div>
-                        <div class="space-y-4">
-                            <div class="bg-indigo-600/10 border border-indigo-500/20 rounded-3xl p-5 flex items-center gap-4">
-                                <div class="bg-indigo-500/20 p-3 rounded-2xl text-indigo-400"><i data-lucide="flame"></i></div>
-                                <div><p class="text-[10px] text-indigo-400 font-bold uppercase">Mejor Racha</p><p class="text-xl font-black text-white">${bestStreak} Días</p></div>
+
+                        <div class="glass rounded-[2.5rem] p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h4 class="text-sm font-bold">Mapa de Actividad</h4>
+                                <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Últimos 30 días</span>
                             </div>
-                            <div class="bg-emerald-600/10 border border-emerald-500/20 rounded-3xl p-5 flex items-center gap-4">
-                                <div class="bg-emerald-500/20 p-3 rounded-2xl text-emerald-400"><i data-lucide="check"></i></div>
-                                <div><p class="text-[10px] text-emerald-400 font-bold uppercase">Total Logros</p><p class="text-xl font-black text-white">${totalCompletions}</p></div>
+                            <div class="grid grid-cols-10 gap-2">
+                                ${heatmap}
+                            </div>
+                            <div class="flex justify-between mt-4 text-[9px] font-bold text-slate-600">
+                                <span>MENOS</span>
+                                <span>MÁS INTENSIDAD</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-indigo-600/10 border border-indigo-500/20 rounded-[2rem] p-6">
+                            <div class="flex gap-4 items-center">
+                                <i data-lucide="sparkles" class="text-indigo-400 w-8 h-8"></i>
+                                <p class="text-xs text-slate-300">Cada hábito completado suma 15 XP. ¡Sigue así para desbloquear el Nivel ${state.profile.level + 1}!</p>
                             </div>
                         </div>
                     </div>
-
-                    <div class="bg-slate-800/50 border border-slate-700 rounded-[2.5rem] p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h4 class="font-bold text-white text-sm">Actividad Mensual</h4>
-                        </div>
-                        <div class="flex flex-wrap gap-2 justify-center">
-                            ${dailyData.map(d => `<div class="w-4 h-4 rounded-sm ${d.intensity === 0 ? 'bg-slate-700/50' : d.intensity < 0.4 ? 'bg-indigo-900' : d.intensity < 0.7 ? 'bg-indigo-600' : 'bg-indigo-400'}"></div>`).join('')}
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="space-y-6 animate-pop">
+                        <h3 class="text-lg font-bold px-1">Tus Medallas</h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${ACHIEVEMENTS_LIST.map(ach => {
+                                const unlocked = state.unlockedAchievements.includes(ach.id);
+                                return `
+                                <div class="glass rounded-3xl p-5 flex items-center gap-5 transition-all ${unlocked ? 'border-indigo-500/30' : 'opacity-40'}">
+                                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${unlocked ? 'bg-indigo-500/20 ' + ach.color : 'bg-slate-800 text-slate-600'}">
+                                        <i data-lucide="${unlocked ? ach.icon : 'lock'}" class="w-8 h-8"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-black text-base tracking-tight ${unlocked ? 'text-white' : 'text-slate-500'}">${ach.title}</h4>
+                                        <p class="text-xs text-slate-500">${ach.desc}</p>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
+            lucide.createIcons();
         };
 
-        const renderAchievements = (container) => {
-            container.innerHTML = `
-                <div class="space-y-6 animate-pop">
-                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i data-lucide="award" class="text-indigo-400"></i> Tus Logros
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        ${ACHIEVEMENTS_LIST.map(ach => {
-                            const isUnlocked = state.unlockedAchievements.includes(ach.id);
-                            return `
-                            <div class="p-5 rounded-[2rem] border transition-all flex items-center gap-4 ${isUnlocked ? 'bg-slate-800/80 border-indigo-500/30' : 'bg-slate-900/50 border-slate-800 opacity-60'}">
-                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${isUnlocked ? 'bg-indigo-500/20 ' + ach.color : 'bg-slate-800 text-slate-600'}">
-                                    <i data-lucide="${isUnlocked ? ach.icon : 'lock'}"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-black tracking-tight ${isUnlocked ? 'text-white' : 'text-slate-500'}">${ach.title}</h4>
-                                    <p class="text-xs text-slate-500 leading-tight">${ach.desc}</p>
-                                </div>
-                            </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
+        // --- INICIO ---
+        window.onload = () => {
+            checkMonthlyReset();
+            updateHeader();
+            render();
+            lucide.createIcons();
         };
-
-        // Initial render
-        render();
 
     </script>
 </body>
