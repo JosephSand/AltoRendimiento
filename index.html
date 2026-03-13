@@ -3,475 +3,754 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habit Tracker Pro - Portátil</title>
+    <title>Life OS - Pro Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
+        :root {
+            --bg-dark: #070a13;
+            --card-dark: #111827;
+            --accent: #6366f1;
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0f172a;
-            -webkit-tap-highlight-color: transparent;
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .sidebar-transition {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .glass {
-            background: rgba(30, 41, 59, 0.5);
+            background: rgba(17, 24, 39, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .animate-pop {
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        .active-link {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border-right: 3px solid #6366f1;
         }
 
-        @keyframes pop {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 10px;
         }
 
-        /* Estilo para el mapa de calor */
-        .heat-cell {
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-view {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .cal-day {
             aspect-ratio: 1/1;
-            border-radius: 2px;
-            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .animate-spin-slow {
-            animation: spin 3s linear infinite;
+        /* Brillo para logros */
+        .achievement-card.unlocked {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
         }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .achievement-icon.unlocked {
+            filter: drop-shadow(0 0 8px currentColor);
         }
     </style>
 </head>
-<body class="text-slate-200 pb-28">
+<body class="custom-scrollbar">
 
-    <!-- Notificación de Logro -->
-    <div id="achievement-toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden animate-pop w-[90%] max-w-sm">
-        <div class="bg-slate-800 border border-indigo-500/50 shadow-2xl shadow-indigo-500/20 rounded-2xl p-4 flex items-center gap-4">
-            <div class="bg-indigo-500/20 p-2 rounded-xl text-indigo-400">
-                <i data-lucide="sparkles"></i>
+    <!-- Toast de Logro -->
+    <div id="achievement-toast" class="fixed top-6 right-6 z-[110] hidden animate-view">
+        <div class="glass p-5 rounded-3xl flex items-center gap-4 shadow-2xl border-indigo-500/50 border-2">
+            <div class="bg-indigo-500/20 p-3 rounded-2xl text-indigo-400">
+                <i data-lucide="award" class="w-8 h-8"></i>
             </div>
             <div>
                 <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">¡Logro Desbloqueado!</p>
-                <h4 id="toast-title" class="font-bold text-white text-sm">Nombre del Logro</h4>
+                <h4 id="toast-title" class="font-bold text-white text-lg leading-none">Logro</h4>
             </div>
         </div>
     </div>
 
-    <!-- Header Principal -->
-    <header class="p-6 bg-slate-900/50 backdrop-blur-md sticky top-0 z-30 border-b border-slate-800">
-        <div class="max-w-2xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="relative">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <i data-lucide="trophy" class="text-white w-6 h-6"></i>
-                    </div>
-                    <div id="user-level" class="absolute -bottom-1 -right-1 bg-amber-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-slate-900 text-slate-900">
-                        Lvl 1
-                    </div>
+    <!-- Menú Lateral -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 glass z-50 sidebar-transition -translate-x-full lg:translate-x-0 border-r border-slate-800">
+        <div class="p-6 flex flex-col h-full">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
+                    <i data-lucide="command" class="text-white"></i>
                 </div>
-                <div>
-                    <h2 class="font-bold text-white leading-tight">Mi Progreso</h2>
-                    <div class="flex items-center gap-2 mt-1">
-                        <div class="w-24 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                            <div id="xp-bar" class="h-full bg-indigo-500 transition-all duration-1000" style="width: 0%"></div>
+                <h1 class="text-xl font-extrabold tracking-tight">LIFE<span class="text-indigo-500">OS</span></h1>
+            </div>
+
+            <nav class="flex-1 space-y-2">
+                <button onclick="switchTab('habits')" id="btn-habits" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800/50 group active-link">
+                    <i data-lucide="check-square" class="w-5 h-5"></i>
+                    <span class="font-semibold text-sm">Hábitos Diarios</span>
+                </button>
+                <button onclick="switchTab('reading')" id="btn-reading" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800/50 group">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                    <span class="font-semibold text-sm">Sesión Lectura</span>
+                </button>
+                <button onclick="switchTab('gym')" id="btn-gym" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800/50 group">
+                    <i data-lucide="dumbbell" class="w-5 h-5"></i>
+                    <span class="font-semibold text-sm">Control Gym</span>
+                </button>
+                <div class="pt-4 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4">Motivación</div>
+                <button onclick="switchTab('achievements')" id="btn-achievements" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800/50 group">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="font-semibold text-sm">Logros & Medallas</span>
+                </button>
+            </nav>
+
+            <div class="mt-auto p-4 bg-slate-800/30 rounded-2xl">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold" id="level-badge">L1</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between text-[10px] font-bold mb-1">
+                            <span>NIVEL</span>
+                            <span id="xp-display">0/100</span>
                         </div>
-                        <span id="xp-text" class="text-[10px] text-slate-400 font-mono">0/100 XP</span>
+                        <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                            <div id="xp-bar" class="h-full bg-indigo-500 transition-all duration-700" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <button onclick="toggleModal(true)" class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-indigo-600/20">
-                <i data-lucide="plus" class="text-white w-5 h-5"></i>
-            </button>
         </div>
+    </aside>
+
+    <!-- Header Móvil -->
+    <header class="lg:hidden p-4 sticky top-0 bg-slate-900/80 backdrop-blur-md z-40 border-b border-slate-800 flex justify-between items-center">
+        <h1 class="font-bold">LIFE OS</h1>
+        <button onclick="toggleSidebar()" class="p-2 bg-slate-800 rounded-lg">
+            <i data-lucide="menu"></i>
+        </button>
     </header>
 
-    <!-- Contenido Principal -->
-    <main id="app-content" class="max-w-2xl mx-auto p-6 min-h-[60vh]">
-        <!-- Cargando... -->
-        <div class="flex flex-col items-center justify-center py-20 text-slate-500">
-            <i data-lucide="refresh-cw" class="animate-spin-slow mb-4 w-8 h-8"></i>
-            <p class="text-xs font-bold uppercase tracking-widest">Iniciando sistema...</p>
+    <!-- Contenido -->
+    <main class="lg:ml-64 p-6 lg:p-10">
+        <div id="view-container" class="max-w-4xl mx-auto">
+            <!-- Cargando vista... -->
         </div>
     </main>
 
-    <!-- Navegación Inferior -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-2xl border-t border-slate-800/50 px-6 py-4 z-40">
-        <div class="max-w-2xl mx-auto flex justify-around items-center">
-            <button onclick="switchTab('today')" id="nav-today" class="flex flex-col items-center gap-1 transition-all text-indigo-400 scale-110">
-                <i data-lucide="target" class="w-6 h-6"></i>
-                <span class="text-[10px] font-bold">Hoy</span>
-            </button>
-            <button onclick="switchTab('stats')" id="nav-stats" class="flex flex-col items-center gap-1 transition-all text-slate-500">
-                <i data-lucide="trending-up" class="w-6 h-6"></i>
-                <span class="text-[10px] font-bold">Progreso</span>
-            </button>
-            <button onclick="switchTab('achievements')" id="nav-achievements" class="flex flex-col items-center gap-1 transition-all text-slate-500">
-                <i data-lucide="award" class="w-6 h-6"></i>
-                <span class="text-[10px] font-bold">Logros</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- Modal Nuevo Hábito -->
-    <div id="add-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl animate-pop">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white">Nuevo Objetivo</h2>
-                <button onclick="toggleModal(false)" class="p-2 text-slate-500 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <div class="space-y-6">
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 ml-1">Nombre del hábito</label>
-                    <input id="habit-name-input" type="text" placeholder="Ej: Beber 2L de agua..." class="w-full bg-slate-800 border-slate-700 border-2 rounded-2xl p-4 text-white focus:border-indigo-500 outline-none transition-all">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 ml-1">Categoría</label>
-                    <div id="category-selector" class="flex flex-wrap gap-2">
-                        <!-- Categorías dinámicas -->
-                    </div>
-                </div>
-                <button onclick="createNewHabit()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 mt-4">
-                    Crear Hábito
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </button>
-            </div>
+    <!-- Modales -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div id="modal-content" class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-view">
         </div>
     </div>
 
     <script>
+        // --- CONSTANTES ---
+        const MONTH_NAMES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const WEEK_DAYS = ["D", "L", "M", "X", "J", "V", "S"];
+        const MUSCLE_GROUPS = ["Pecho", "Espalda", "Pierna", "Hombro", "Brazo", "Cardio", "Abdomen"];
+        
+        const ACHIEVEMENTS_DATA = [
+            { id: 'first_habit', title: 'Principiante', desc: 'Completa tu primer hábito', icon: 'zap', color: '#60a5fa', goal: 1 },
+            { id: 'consistency_king', title: 'Rey de la Constancia', desc: 'Logra una racha de 7 días', icon: 'calendar-check', color: '#818cf8', goal: 7 },
+            { id: 'habit_master', title: 'Disciplina de Acero', desc: 'Mantén 5 hábitos activos', icon: 'shield-check', color: '#a78bfa', goal: 5 },
+            { id: 'gym_addict', title: 'Bestia del Gym', desc: 'Entrena 12 veces en el mes', icon: 'flame', color: '#f87171', goal: 12 },
+            { id: 'fitness_elite', title: 'Atleta Élite', desc: 'Entrena 20 veces este mes', icon: 'award', color: '#ef4444', goal: 20 },
+            { id: 'muscle_master', title: 'Anatomía Completa', desc: 'Entrena 5 grupos musculares', icon: 'layout', color: '#fb923c', goal: 5 },
+            { id: 'bookworm', title: 'Ratón de Biblioteca', desc: 'Termina 2 libros este mes', icon: 'book', color: '#4ade80', goal: 2 },
+            { id: 'knowledge_seeker', title: 'Buscador de Saber', desc: 'Lee 250 páginas totales', icon: 'library', color: '#2dd4bf', goal: 250 },
+            { id: 'level_five', title: 'Leyenda Viva', desc: 'Alcanza el nivel 5', icon: 'star', color: '#fbbf24', goal: 5 },
+            { id: 'level_ten', title: 'Maestro Supremo', desc: 'Alcanza el nivel 10', icon: 'crown', color: '#f59e0b', goal: 10 },
+            { id: 'xp_warrior', title: 'Guerrero de XP', desc: 'Acumula 500 XP totales', icon: 'sword', color: '#f472b6', goal: 500 },
+            { id: 'xp_titan', title: 'Titán de XP', desc: 'Llega a los 1000 XP totales', icon: 'gem', color: '#ec4899', goal: 1000 }
+        ];
+
+        // --- ESTADO ---
+        let state = {
+            activeTab: 'habits',
+            profile: { xp: 0, level: 1, lastReset: '' },
+            habits: [],
+            reading: { 
+                books: [], 
+                logs: {} // Formato: { 'YYYY-MM-DD': pagesRead }
+            },
+            gym: { logs: {} },
+            achievements: [] 
+        };
+
         // --- MOTOR DE PERSISTENCIA ---
-        const Storage = {
-            prefix: 'habit_pro_',
-            save: (key, data) => localStorage.setItem(Storage.prefix + key, JSON.stringify(data)),
-            get: (key) => {
-                const item = localStorage.getItem(Storage.prefix + key);
-                return item ? JSON.parse(item) : null;
+        const initApp = () => {
+            const saved = localStorage.getItem('life_os_data_v2');
+            const now = new Date();
+            const currentMonthYear = `${now.getMonth()}-${now.getFullYear()}`;
+
+            if (saved) {
+                state = JSON.parse(saved);
+                if (state.profile.lastReset !== currentMonthYear) {
+                    resetMonthlyData(currentMonthYear);
+                }
+            } else {
+                resetMonthlyData(currentMonthYear);
+            }
+            
+            render();
+            updateSidebarStats();
+        };
+
+        const resetMonthlyData = (monthYear) => {
+            state.habits = [];
+            state.reading = { books: [], logs: {} };
+            state.gym = { logs: {} };
+            state.profile.lastReset = monthYear;
+            state.achievements = []; 
+            saveData();
+        };
+
+        const saveData = () => {
+            localStorage.setItem('life_os_data_v2', JSON.stringify(state));
+        };
+
+        // --- NAVEGACIÓN ---
+        const switchTab = (tab) => {
+            state.activeTab = tab;
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-link'));
+            const btn = document.getElementById(`btn-${tab}`);
+            if(btn) btn.classList.add('active-link');
+            if (window.innerWidth < 1024) document.getElementById('sidebar').classList.add('-translate-x-full');
+            render();
+        };
+
+        const toggleSidebar = () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        };
+
+        // --- HELPERS CALENDARIO ---
+        const getCalendarData = () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(year, month, 1).getDay();
+            return { year, month, daysInMonth, firstDay };
+        };
+
+        // --- VISTAS ---
+        
+        // --- VISTA HÁBITOS ---
+        const renderHabits = () => {
+            const today = new Date().toISOString().split('T')[0];
+            return `
+                <div class="animate-view">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-white tracking-tight">Hábitos Diarios</h2>
+                            <p class="text-slate-500 text-sm">Construye tu mejor versión paso a paso</p>
+                        </div>
+                        <button onclick="showHabitModal()" class="px-5 py-2.5 bg-indigo-600 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/20 hover:scale-105 transition-transform flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Nuevo
+                        </button>
+                    </div>
+                    <div class="grid gap-4">
+                        ${state.habits.length === 0 ? `
+                            <div class="p-20 text-center glass rounded-[2.5rem] border-dashed border-slate-700">
+                                <p class="text-slate-500 font-medium">No hay hábitos configurados para este mes.</p>
+                            </div>
+                        ` : state.habits.map(h => {
+                            const done = h.logs && h.logs[today];
+                            return `
+                                <div class="glass p-5 rounded-3xl flex items-center justify-between group transition-all ${done ? 'opacity-50' : ''}">
+                                    <div class="flex items-center gap-5">
+                                        <button onclick="toggleHabitLog('${h.id}')" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${done ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500'}">
+                                            <i data-lucide="${done ? 'check' : 'circle'}" class="w-6 h-6"></i>
+                                        </button>
+                                        <div>
+                                            <h4 class="font-bold text-lg ${done ? 'line-through' : ''}">${h.name}</h4>
+                                            <div class="flex items-center gap-2 text-orange-400 font-bold text-[10px] uppercase">
+                                                <i data-lucide="flame" class="w-3 h-3"></i> Racha: ${h.streak || 0} días
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onclick="deleteHabit('${h.id}')" class="opacity-0 group-hover:opacity-100 p-2 text-slate-600 hover:text-red-400 transition-colors">
+                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        // --- VISTA LECTURA ---
+        const renderReading = () => {
+            const { year, month, daysInMonth, firstDay } = getCalendarData();
+            const totalPagesMonth = Object.values(state.reading.logs).reduce((a, b) => a + b, 0);
+            
+            return `
+                <div class="animate-view">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-white tracking-tight">Lectura</h2>
+                            <p class="text-slate-500 text-sm">Control de lectura y progreso mensual</p>
+                        </div>
+                        <button onclick="showBookModal()" class="px-5 py-2.5 bg-indigo-600 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/20 hover:scale-105 transition-transform">
+                            Añadir Libro
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Calendario de Lectura -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="glass rounded-[2.5rem] p-8">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="font-bold text-lg">Consistencia: ${MONTH_NAMES[month]}</h3>
+                                    <div class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">${totalPagesMonth} Págs leídas</div>
+                                </div>
+                                <div class="grid grid-cols-7 gap-2 text-center mb-4">
+                                    ${WEEK_DAYS.map(d => `<span class="text-[10px] font-black text-slate-600">${d}</span>`).join('')}
+                                </div>
+                                <div class="grid grid-cols-7 gap-3">
+                                    ${Array(firstDay).fill(0).map(() => `<div class="aspect-square opacity-0"></div>`).join('')}
+                                    ${Array(daysInMonth).fill(0).map((_, i) => {
+                                        const d = i + 1;
+                                        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                        const pages = state.reading.logs[dateStr] || 0;
+                                        return `
+                                            <div onclick="showReadLogModal('${dateStr}')" 
+                                                class="cal-day ${pages > 0 ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-800/40 text-slate-500 hover:bg-slate-800'} relative">
+                                                ${d}
+                                                ${pages > 0 ? `<span class="absolute -bottom-1 -right-1 text-[8px] bg-white text-emerald-700 px-1 rounded-sm shadow-sm">${pages}</span>` : ''}
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Lista de Libros Activos -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${state.reading.books.length === 0 ? `<p class="text-slate-500 text-xs italic px-4">No hay libros registrados este mes.</p>` : state.reading.books.map(b => {
+                                    const progress = Math.min(Math.round((b.readPages / b.totalPages) * 100), 100);
+                                    return `
+                                        <div class="glass p-5 rounded-3xl space-y-4">
+                                            <div class="flex justify-between items-start">
+                                                <div class="w-10 h-14 rounded-md bg-gradient-to-br from-indigo-500 to-emerald-500 shadow-md"></div>
+                                                <button onclick="deleteBook('${b.id}')" class="text-slate-600 hover:text-red-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-bold text-white text-sm truncate">${b.title}</h4>
+                                                <p class="text-[10px] text-slate-500">${b.readPages} / ${b.totalPages} págs</p>
+                                            </div>
+                                            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                                <div class="h-full bg-emerald-500" style="width: ${progress}%"></div>
+                                            </div>
+                                            <button onclick="showQuickUpdateBook('${b.id}')" class="w-full py-2 bg-slate-800/50 rounded-xl text-[10px] font-bold hover:bg-slate-700 transition-colors">ACTUALIZAR PROGRESO</button>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Panel Lateral Reading Insights -->
+                        <div class="glass rounded-3xl p-6 h-fit">
+                            <h3 class="font-bold text-indigo-400 mb-4 flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> Insights
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="bg-slate-800/40 p-4 rounded-2xl">
+                                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Racha Actual</p>
+                                    <p class="text-2xl font-black text-white">${calculateReadingStreak()} Días</p>
+                                </div>
+                                <div class="bg-slate-800/40 p-4 rounded-2xl">
+                                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Promedio Diario</p>
+                                    <p class="text-2xl font-black text-white">${Math.round(totalPagesMonth / (new Date().getDate())) || 0} <span class="text-xs font-normal">P/D</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // --- VISTA GYM ---
+        const renderGym = () => {
+            const { year, month, daysInMonth, firstDay } = getCalendarData();
+            const logs = state.gym.logs;
+
+            return `
+                <div class="animate-view">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-white tracking-tight">Control Gym</h2>
+                            <p class="text-slate-500 text-sm">Registro de actividad física mensual</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 glass rounded-[2.5rem] p-8">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="font-bold text-lg">Entrenamiento: ${MONTH_NAMES[month]}</h3>
+                            </div>
+                            <div class="grid grid-cols-7 gap-2 text-center mb-4">
+                                ${WEEK_DAYS.map(d => `<span class="text-[10px] font-black text-slate-600">${d}</span>`).join('')}
+                            </div>
+                            <div class="grid grid-cols-7 gap-3">
+                                ${Array(firstDay).fill(0).map(() => `<div class="aspect-square opacity-0"></div>`).join('')}
+                                ${Array(daysInMonth).fill(0).map((_, i) => {
+                                    const d = i + 1;
+                                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                    const hasLog = logs[dateStr];
+                                    return `
+                                        <div onclick="showGymLogModal('${dateStr}')" 
+                                            class="cal-day ${hasLog ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-800/40 text-slate-500 hover:bg-slate-800'}">
+                                            ${d}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div class="glass rounded-3xl p-6 h-fit">
+                            <h5 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Enfoque Mensual</h5>
+                            <div class="space-y-4">
+                                ${MUSCLE_GROUPS.map(m => {
+                                    const count = Object.values(logs).filter(l => l.muscles.includes(m)).length;
+                                    const percent = Object.keys(logs).length > 0 ? (count / Object.keys(logs).length) * 100 : 0;
+                                    return `
+                                        <div class="space-y-1">
+                                            <div class="flex justify-between text-[10px] font-bold"><span>${m}</span><span>${count}</span></div>
+                                            <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                                                <div class="h-full bg-indigo-500" style="width: ${percent}%"></div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // --- VISTA LOGROS ---
+        const renderAchievements = () => {
+            return `
+                <div class="animate-view">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-extrabold text-white tracking-tight">Logros & Medallas</h2>
+                        <p class="text-slate-500 text-sm">Tu camino a la gloria este mes</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${ACHIEVEMENTS_DATA.map(ach => {
+                            const isUnlocked = state.achievements.includes(ach.id);
+                            const progressVal = getAchievementProgress(ach.id);
+                            const progressPercent = Math.min((progressVal / ach.goal) * 100, 100);
+                            return `
+                                <div class="achievement-card glass p-6 rounded-[2.5rem] flex items-center gap-6 transition-all relative overflow-hidden ${isUnlocked ? 'unlocked' : 'opacity-60 grayscale'}">
+                                    <div class="achievement-icon ${isUnlocked ? 'unlocked' : ''} w-16 h-16 rounded-3xl flex items-center justify-center shrink-0" 
+                                         style="background: ${ach.color}20; color: ${ach.color}">
+                                        <i data-lucide="${isUnlocked ? ach.icon : 'lock'}" class="w-8 h-8"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <h4 class="font-bold text-lg text-white">${ach.title}</h4>
+                                            ${isUnlocked ? '<span class="text-[10px] font-black text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded-full">CHECK</span>' : ''}
+                                        </div>
+                                        <p class="text-xs text-slate-500 mb-3 leading-tight">${ach.desc}</p>
+                                        ${!isUnlocked ? `
+                                            <div class="space-y-1">
+                                                <div class="flex justify-between text-[9px] font-black text-slate-400">
+                                                    <span>PROGRESO</span>
+                                                    <span>${progressVal} / ${ach.goal}</span>
+                                                </div>
+                                                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                                    <div class="h-full transition-all duration-700" style="width: ${progressPercent}%; background: ${ach.color}"></div>
+                                                </div>
+                                            </div>
+                                        ` : `
+                                            <div class="flex items-center gap-2 text-[10px] font-bold text-indigo-400">
+                                                <i data-lucide="check-circle-2" class="w-3 h-3"></i> Logro alcanzado
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        // --- SISTEMA DE LOGROS E XP ---
+        const checkAchievements = () => {
+            let newlyUnlocked = [];
+            ACHIEVEMENTS_DATA.forEach(ach => {
+                if (state.achievements.includes(ach.id)) return;
+                const currentVal = getAchievementProgress(ach.id);
+                if (currentVal >= ach.goal) {
+                    state.achievements.push(ach.id);
+                    newlyUnlocked.push(ach.title);
+                }
+            });
+            newlyUnlocked.forEach(title => notifyLogro(title));
+            saveData();
+        };
+
+        const getAchievementProgress = (id) => {
+            switch(id) {
+                case 'first_habit': return state.habits.some(h => Object.keys(h.logs || {}).length > 0) ? 1 : 0;
+                case 'consistency_king': return state.habits.length > 0 ? Math.max(...state.habits.map(h => h.streak || 0)) : 0;
+                case 'habit_master': return state.habits.length;
+                case 'gym_addict': return Object.keys(state.gym.logs).length;
+                case 'fitness_elite': return Object.keys(state.gym.logs).length;
+                case 'muscle_master':
+                    const uniqueMuscles = new Set();
+                    Object.values(state.gym.logs).forEach(log => log.muscles.forEach(m => uniqueMuscles.add(m)));
+                    return uniqueMuscles.size;
+                case 'bookworm': return state.reading.books.filter(b => b.readPages >= b.totalPages && b.totalPages > 0).length;
+                case 'knowledge_seeker': return Object.values(state.reading.logs).reduce((a, b) => a + b, 0);
+                case 'level_five': return state.profile.level;
+                case 'level_ten': return state.profile.level;
+                case 'xp_warrior': return state.profile.xp;
+                case 'xp_titan': return state.profile.xp;
+                default: return 0;
             }
         };
 
-        // --- ESTADO GLOBAL ---
-        let state = {
-            habits: Storage.get('habits') || [],
-            profile: Storage.get('profile') || { xp: 0, level: 1, lastResetMonth: new Date().getMonth() },
-            unlockedAchievements: Storage.get('achievements') || [],
-            activeTab: 'today',
-            selectedCategory: 'Salud'
-        };
-
-        const CATEGORIES = ['Salud', 'Trabajo', 'Mente', 'Social', 'Hobby'];
-        const ACHIEVEMENTS_LIST = [
-            { id: 'first_habit', title: 'Primer Paso', desc: 'Crea tu primer hábito', icon: 'target', color: 'text-blue-400' },
-            { id: 'level_5', title: 'Aspirante', desc: 'Alcanza el nivel 5', icon: 'trending-up', color: 'text-purple-400' },
-            { id: 'streak_7', title: 'Constancia', desc: 'Logra una racha de 7 días', icon: 'flame', color: 'text-orange-400' },
-            { id: 'master_5', title: 'Multitarea', desc: 'Ten 5 hábitos activos', icon: 'zap', color: 'text-amber-400' },
-            { id: 'perfectionist', title: 'Perfeccionista', desc: 'Día completo (mínimo 2)', icon: 'award', color: 'text-emerald-400' }
-        ];
-
-        // --- LÓGICA DE NEGOCIO ---
-        
-        const saveState = () => {
-            Storage.save('habits', state.habits);
-            Storage.save('profile', state.profile);
-            Storage.save('achievements', state.unlockedAchievements);
-        };
-
-        const updateXP = (amount) => {
-            state.profile.xp = Math.max(0, state.profile.xp + amount);
-            state.profile.level = Math.floor(state.profile.xp / 100) + 1;
-            updateHeader();
-            saveState();
-            checkAchievements();
-        };
-
-        const calculateStreak = (dates) => {
-            if (!dates || dates.length === 0) return 0;
-            const sorted = [...dates].sort().reverse();
+        const calculateReadingStreak = () => {
             let streak = 0;
-            let curr = new Date();
-            for (let i = 0; i < 365; i++) {
-                const dStr = curr.toISOString().split('T')[0];
-                if (sorted.includes(dStr)) {
-                    streak++;
-                    curr.setDate(curr.getDate() - 1);
-                } else if (i === 0) {
-                    curr.setDate(curr.getDate() - 1);
-                    continue;
-                } else { break; }
+            let check = new Date();
+            for(let i=0; i<30; i++) {
+                const d = check.toISOString().split('T')[0];
+                if(state.reading.logs[d]) streak++;
+                else if(i > 0) break;
+                check.setDate(check.getDate() - 1);
             }
             return streak;
         };
 
-        const checkMonthlyReset = () => {
-            const currentMonth = new Date().getMonth();
-            if (state.profile.lastResetMonth !== currentMonth) {
-                state.habits = state.habits.map(h => ({ ...h, completedDates: [], streak: 0 }));
-                state.profile.lastResetMonth = currentMonth;
-                saveState();
-            }
+        const updateSidebarStats = () => {
+            const xp = state.profile.xp % 100;
+            const lvl = state.profile.level;
+            document.getElementById('level-badge').innerText = `L${lvl}`;
+            document.getElementById('xp-display').innerText = `${xp}/100`;
+            document.getElementById('xp-bar').style.width = `${xp}%`;
         };
 
-        const checkAchievements = () => {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const newlyUnlocked = [];
-
-            if (state.habits.length > 0 && !state.unlockedAchievements.includes('first_habit')) newlyUnlocked.push('first_habit');
-            if (state.profile.level >= 5 && !state.unlockedAchievements.includes('level_5')) newlyUnlocked.push('level_5');
-            if (state.habits.some(h => h.streak >= 7) && !state.unlockedAchievements.includes('streak_7')) newlyUnlocked.push('streak_7');
-            if (state.habits.length >= 5 && !state.unlockedAchievements.includes('master_5')) newlyUnlocked.push('master_5');
-            
-            const allDone = state.habits.length >= 2 && state.habits.every(h => h.completedDates?.includes(todayStr));
-            if (allDone && !state.unlockedAchievements.includes('perfectionist')) newlyUnlocked.push('perfectionist');
-
-            newlyUnlocked.forEach(id => {
-                state.unlockedAchievements.push(id);
-                showToast(ACHIEVEMENTS_LIST.find(a => a.id === id));
-            });
-            if (newlyUnlocked.length > 0) saveState();
-        };
-
-        const showToast = (ach) => {
+        const notifyLogro = (title) => {
             const toast = document.getElementById('achievement-toast');
-            document.getElementById('toast-title').innerText = ach.title;
+            document.getElementById('toast-title').innerText = title;
             toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 5000);
+            setTimeout(() => toast.classList.add('hidden'), 4000);
         };
 
-        // --- CONTROLADORES UI ---
-
-        window.switchTab = (tab) => {
-            state.activeTab = tab;
-            document.querySelectorAll('nav button').forEach(btn => {
-                btn.classList.remove('text-indigo-400', 'scale-110');
-                btn.classList.add('text-slate-500');
-            });
-            const activeNav = document.getElementById(`nav-${tab}`);
-            activeNav.classList.add('text-indigo-400', 'scale-110');
-            activeNav.classList.remove('text-slate-500');
-            render();
-        };
-
-        window.toggleModal = (show) => {
-            const modal = document.getElementById('add-modal');
-            modal.classList.toggle('hidden', !show);
-            if (show) {
-                renderCategorySelector();
-                document.getElementById('habit-name-input').focus();
+        window.addXP = (amount) => {
+            state.profile.xp += amount;
+            const newLvl = Math.floor(state.profile.xp / 100) + 1;
+            if (newLvl > state.profile.level) {
+                state.profile.level = newLvl;
+                notifyLogro(`¡Nivel ${newLvl} alcanzado!`);
             }
+            updateSidebarStats();
+            saveData();
+            checkAchievements();
         };
 
-        window.selectCat = (cat) => {
-            state.selectedCategory = cat;
-            renderCategorySelector();
+        // --- MODALES ---
+        const toggleModal = (show) => document.getElementById('modal-overlay').classList.toggle('hidden', !show);
+
+        // Hábitos
+        window.showHabitModal = () => {
+            document.getElementById('modal-content').innerHTML = `
+                <h3 class="text-xl font-bold mb-6 text-white">Nuevo Hábito</h3>
+                <input type="text" id="habit-name" placeholder="Ej: Meditar 10 min..." class="w-full bg-slate-800 border-none rounded-2xl p-4 text-white mb-6 focus:ring-2 focus:ring-indigo-500">
+                <div class="flex gap-4">
+                    <button onclick="toggleModal(false)" class="flex-1 py-4 text-slate-400 font-bold">Cancelar</button>
+                    <button onclick="createHabit()" class="flex-1 py-4 bg-indigo-600 rounded-2xl font-bold text-white shadow-lg">Crear</button>
+                </div>
+            `;
+            toggleModal(true);
         };
 
-        const renderCategorySelector = () => {
-            const container = document.getElementById('category-selector');
-            container.innerHTML = CATEGORIES.map(cat => `
-                <button onclick="window.selectCat('${cat}')" 
-                    class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${state.selectedCategory === cat ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
-                    ${cat}
-                </button>
-            `).join('');
-        };
-
-        window.createNewHabit = () => {
-            const input = document.getElementById('habit-name-input');
-            const name = input.value.trim();
+        window.createHabit = () => {
+            const name = document.getElementById('habit-name').value;
             if (!name) return;
-
-            state.habits.push({
-                id: Date.now(),
-                name,
-                category: state.selectedCategory,
-                completedDates: [],
-                streak: 0,
-                createdAt: new Date().toISOString()
-            });
-
-            input.value = '';
-            toggleModal(false);
-            updateXP(25);
-            render();
+            state.habits.push({ id: Date.now().toString(), name, logs: {}, streak: 0 });
+            saveData(); toggleModal(false); render(); addXP(20);
         };
 
-        window.toggleHabit = (id) => {
-            const todayStr = new Date().toISOString().split('T')[0];
+        window.toggleHabitLog = (id) => {
+            const today = new Date().toISOString().split('T')[0];
             const habit = state.habits.find(h => h.id === id);
-            const isDone = habit.completedDates.includes(todayStr);
-
-            if (isDone) {
-                habit.completedDates = habit.completedDates.filter(d => d !== todayStr);
-                updateXP(-15);
-            } else {
-                habit.completedDates.push(todayStr);
-                updateXP(15);
+            if (!habit.logs) habit.logs = {};
+            if (habit.logs[today]) { delete habit.logs[today]; addXP(-15); }
+            else { habit.logs[today] = true; addXP(15); }
+            
+            // Recalcular racha
+            let streak = 0;
+            let check = new Date();
+            for(let i=0; i<30; i++) {
+                const d = check.toISOString().split('T')[0];
+                if(habit.logs[d]) streak++;
+                else if(i > 0) break;
+                check.setDate(check.getDate() - 1);
             }
-
-            habit.streak = calculateStreak(habit.completedDates);
-            saveState();
-            render();
+            habit.streak = streak;
+            saveData(); render();
         };
 
         window.deleteHabit = (id) => {
             state.habits = state.habits.filter(h => h.id !== id);
-            saveState();
-            render();
+            saveData(); render();
         };
 
-        const updateHeader = () => {
-            document.getElementById('user-level').innerText = `Lvl ${state.profile.level}`;
-            document.getElementById('xp-bar').style.width = `${state.profile.xp % 100}%`;
-            document.getElementById('xp-text').innerText = `${state.profile.xp % 100}/100 XP`;
+        // Lectura
+        window.showBookModal = () => {
+            document.getElementById('modal-content').innerHTML = `
+                <h3 class="text-xl font-bold mb-6 text-white">Añadir Libro</h3>
+                <div class="space-y-4 mb-8">
+                    <input type="text" id="book-title" placeholder="Título del libro" class="w-full bg-slate-800 border-none rounded-2xl p-4 text-white">
+                    <input type="number" id="book-pages" placeholder="Páginas totales" class="w-full bg-slate-800 border-none rounded-2xl p-4 text-white">
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="toggleModal(false)" class="flex-1 py-4 text-slate-400 font-bold">Cancelar</button>
+                    <button onclick="createBook()" class="flex-1 py-4 bg-indigo-600 rounded-2xl font-bold text-white shadow-lg">Empezar</button>
+                </div>
+            `;
+            toggleModal(true);
         };
 
-        // --- RENDERIZADO DE VISTAS ---
+        window.createBook = () => {
+            const title = document.getElementById('book-title').value;
+            const pages = parseInt(document.getElementById('book-pages').value);
+            if (!title || !pages) return;
+            state.reading.books.push({ id: Date.now().toString(), title, totalPages: pages, readPages: 0 });
+            saveData(); toggleModal(false); render(); addXP(30);
+        };
 
-        const render = () => {
-            const container = document.getElementById('app-content');
-            const todayStr = new Date().toISOString().split('T')[0];
+        window.showReadLogModal = (dateStr) => {
+            const current = state.reading.logs[dateStr] || 0;
+            document.getElementById('modal-content').innerHTML = `
+                <h3 class="text-xl font-bold mb-2 text-white">Lectura: ${dateStr}</h3>
+                <p class="text-slate-500 text-xs mb-6">¿Cuántas páginas leíste hoy?</p>
+                <input type="number" id="daily-pages" value="${current}" class="w-full bg-slate-800 border-none rounded-2xl p-4 text-white mb-6 text-center text-3xl font-black">
+                <div class="flex gap-4">
+                    <button onclick="toggleModal(false)" class="flex-1 py-4 text-slate-400 font-bold">Cerrar</button>
+                    <button onclick="saveReadLog('${dateStr}')" class="flex-1 py-4 bg-emerald-600 rounded-2xl font-bold text-white shadow-lg">Guardar</button>
+                </div>
+            `;
+            toggleModal(true);
+        };
 
-            if (state.activeTab === 'today') {
-                const completed = state.habits.filter(h => h.completedDates.includes(todayStr)).length;
-                container.innerHTML = `
-                    <div class="space-y-6 animate-pop">
-                        <div class="glass rounded-3xl p-4 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-indigo-500/20 p-2 rounded-xl text-indigo-400">
-                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-slate-500 uppercase">Ciclo de ${new Date().toLocaleString('es', {month:'long'})}</p>
-                                    <p class="text-xs text-indigo-300">Reinicio activo al finalizar mes</p>
-                                </div>
-                            </div>
-                            <span class="bg-indigo-600/20 text-indigo-400 text-[10px] font-bold px-2 py-1 rounded-lg">LIVE</span>
-                        </div>
-
-                        <div class="flex justify-between items-end px-1">
-                            <h3 class="text-lg font-bold">Hábitos para hoy</h3>
-                            <span class="text-slate-500 text-xs">${completed}/${state.habits.length} hechos</span>
-                        </div>
-
-                        <div class="grid gap-3">
-                            ${state.habits.length === 0 ? `
-                                <div class="bg-slate-800/20 border-2 border-dashed border-slate-800 rounded-[2rem] p-12 text-center">
-                                    <i data-lucide="sparkles" class="mx-auto text-slate-700 w-12 h-12 mb-4"></i>
-                                    <p class="text-slate-500 text-sm">Comienza tu viaje hoy mismo</p>
-                                    <button onclick="toggleModal(true)" class="mt-4 text-indigo-400 text-xs font-bold uppercase tracking-widest">Crear hábito</button>
-                                </div>
-                            ` : state.habits.map(h => {
-                                const done = h.completedDates.includes(todayStr);
-                                return `
-                                <div class="group bg-slate-800/40 border border-slate-800/50 rounded-3xl p-4 flex items-center justify-between transition-all ${done ? 'opacity-60 grayscale' : ''}">
-                                    <div class="flex items-center gap-4">
-                                        <button onclick="toggleHabit(${h.id})" class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${done ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'}">
-                                            <i data-lucide="${done ? 'check-circle-2' : 'circle'}"></i>
-                                        </button>
-                                        <div>
-                                            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">${h.category}</span>
-                                            <h4 class="font-bold text-sm leading-none ${done ? 'line-through' : ''}">${h.name}</h4>
-                                            <div class="flex items-center gap-1 mt-1 text-orange-400 text-[10px] font-bold">
-                                                <i data-lucide="flame" class="w-3 h-3"></i> ${h.streak} días
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button onclick="deleteHabit(${h.id})" class="opacity-0 group-hover:opacity-100 p-2 text-slate-700 hover:text-rose-500 transition-all">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            } else if (state.activeTab === 'stats') {
-                const last30Days = [...Array(30)].map((_, i) => {
-                    const d = new Date(); d.setDate(d.getDate() - i);
-                    return d.toISOString().split('T')[0];
-                }).reverse();
-
-                const heatmap = last30Days.map(date => {
-                    const count = state.habits.filter(h => h.completedDates.includes(date)).length;
-                    const intensity = state.habits.length > 0 ? count / state.habits.length : 0;
-                    return `<div class="heat-cell w-full ${intensity === 0 ? 'bg-slate-800' : intensity < 0.5 ? 'bg-indigo-900' : intensity < 1 ? 'bg-indigo-600' : 'bg-indigo-400'}"></div>`;
-                }).join('');
-
-                container.innerHTML = `
-                    <div class="space-y-6 animate-pop">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="glass rounded-[2rem] p-6 text-center">
-                                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total XP</p>
-                                <p class="text-3xl font-black text-white">${state.profile.xp}</p>
-                            </div>
-                            <div class="glass rounded-[2rem] p-6 text-center">
-                                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Hábitos</p>
-                                <p class="text-3xl font-black text-white">${state.habits.length}</p>
-                            </div>
-                        </div>
-
-                        <div class="glass rounded-[2.5rem] p-6">
-                            <div class="flex justify-between items-center mb-6">
-                                <h4 class="text-sm font-bold">Mapa de Actividad</h4>
-                                <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Últimos 30 días</span>
-                            </div>
-                            <div class="grid grid-cols-10 gap-2">
-                                ${heatmap}
-                            </div>
-                            <div class="flex justify-between mt-4 text-[9px] font-bold text-slate-600">
-                                <span>MENOS</span>
-                                <span>MÁS INTENSIDAD</span>
-                            </div>
-                        </div>
-
-                        <div class="bg-indigo-600/10 border border-indigo-500/20 rounded-[2rem] p-6">
-                            <div class="flex gap-4 items-center">
-                                <i data-lucide="sparkles" class="text-indigo-400 w-8 h-8"></i>
-                                <p class="text-xs text-slate-300">Cada hábito completado suma 15 XP. ¡Sigue así para desbloquear el Nivel ${state.profile.level + 1}!</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <div class="space-y-6 animate-pop">
-                        <h3 class="text-lg font-bold px-1">Tus Medallas</h3>
-                        <div class="grid grid-cols-1 gap-3">
-                            ${ACHIEVEMENTS_LIST.map(ach => {
-                                const unlocked = state.unlockedAchievements.includes(ach.id);
-                                return `
-                                <div class="glass rounded-3xl p-5 flex items-center gap-5 transition-all ${unlocked ? 'border-indigo-500/30' : 'opacity-40'}">
-                                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${unlocked ? 'bg-indigo-500/20 ' + ach.color : 'bg-slate-800 text-slate-600'}">
-                                        <i data-lucide="${unlocked ? ach.icon : 'lock'}" class="w-8 h-8"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-black text-base tracking-tight ${unlocked ? 'text-white' : 'text-slate-500'}">${ach.title}</h4>
-                                        <p class="text-xs text-slate-500">${ach.desc}</p>
-                                    </div>
-                                </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
+        window.saveReadLog = (dateStr) => {
+            const val = parseInt(document.getElementById('daily-pages').value) || 0;
+            if (val === 0) delete state.reading.logs[dateStr];
+            else {
+                state.reading.logs[dateStr] = val;
+                addXP(Math.round(val / 2));
             }
+            saveData(); toggleModal(false); render();
+        };
+
+        window.showQuickUpdateBook = (id) => {
+            const book = state.reading.books.find(b => b.id === id);
+            document.getElementById('modal-content').innerHTML = `
+                <h3 class="text-xl font-bold mb-2 text-white">Progreso: ${book.title}</h3>
+                <p class="text-slate-500 text-xs mb-6">Vas por la página ${book.readPages}</p>
+                <input type="number" id="new-page" placeholder="Página actual" class="w-full bg-slate-800 border-none rounded-2xl p-4 text-white mb-6">
+                <div class="flex gap-4">
+                    <button onclick="toggleModal(false)" class="flex-1 py-4 text-slate-400 font-bold">Atrás</button>
+                    <button onclick="updateBookProgress('${id}')" class="flex-1 py-4 bg-indigo-600 rounded-2xl font-bold text-white shadow-lg">Actualizar</button>
+                </div>
+            `;
+            toggleModal(true);
+        };
+
+        window.updateBookProgress = (id) => {
+            const val = parseInt(document.getElementById('new-page').value);
+            const book = state.reading.books.find(b => b.id === id);
+            if (isNaN(val)) return;
+            book.readPages = Math.min(val, book.totalPages);
+            saveData(); toggleModal(false); render();
+        };
+
+        window.deleteBook = (id) => {
+            state.reading.books = state.reading.books.filter(b => b.id !== id);
+            saveData(); render();
+        };
+
+        // Gym
+        let tempMuscles = [];
+        window.showGymLogModal = (dateStr) => {
+            const log = state.gym.logs[dateStr] || { muscles: [] };
+            tempMuscles = [...log.muscles];
+            document.getElementById('modal-content').innerHTML = `
+                <h3 class="text-xl font-bold mb-4 text-white">Gym: ${dateStr}</h3>
+                <div class="grid grid-cols-2 gap-2 mb-8">
+                    ${MUSCLE_GROUPS.map(m => `
+                        <button onclick="toggleMuscleSelection(this, '${m}')" class="py-3 rounded-xl text-xs font-bold border transition-all ${tempMuscles.includes(m) ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}">
+                            ${m}
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="toggleModal(false)" class="flex-1 py-4 text-slate-400 font-bold">Cerrar</button>
+                    <button onclick="saveGymLog('${dateStr}')" class="flex-1 py-4 bg-indigo-600 rounded-2xl font-bold text-white shadow-lg">Guardar</button>
+                </div>
+            `;
+            toggleModal(true);
+        };
+
+        window.toggleMuscleSelection = (btn, m) => {
+            if (tempMuscles.includes(m)) {
+                tempMuscles = tempMuscles.filter(x => x !== m);
+                btn.className = "py-3 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800 text-slate-400 transition-all";
+            } else {
+                tempMuscles.push(m);
+                btn.className = "py-3 rounded-xl text-xs font-bold border border-indigo-500 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 transition-all";
+            }
+        };
+
+        window.saveGymLog = (dateStr) => {
+            if (tempMuscles.length === 0) delete state.gym.logs[dateStr];
+            else { state.gym.logs[dateStr] = { muscles: tempMuscles }; addXP(50); }
+            saveData(); toggleModal(false); render();
+        };
+
+        // --- RENDERIZADO ---
+        const render = () => {
+            const container = document.getElementById('view-container');
+            if (state.activeTab === 'habits') container.innerHTML = renderHabits();
+            else if (state.activeTab === 'reading') container.innerHTML = renderReading();
+            else if (state.activeTab === 'gym') container.innerHTML = renderGym();
+            else if (state.activeTab === 'achievements') container.innerHTML = renderAchievements();
+            
             lucide.createIcons();
         };
 
         // --- INICIO ---
         window.onload = () => {
-            checkMonthlyReset();
-            updateHeader();
+            initApp();
             render();
-            lucide.createIcons();
         };
 
     </script>
 </body>
 </html>
+
